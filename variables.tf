@@ -1,5 +1,3 @@
-#Module      : LABEL
-#Description : Terraform label module variables.
 variable "name" {
   type        = string
   default     = ""
@@ -8,7 +6,7 @@ variable "name" {
 
 variable "repository" {
   type        = string
-  default     = ""
+  default     = "https://github.com/slovink/terraform-aws-kms.git"
   description = "Terraform current module repo"
 }
 
@@ -20,30 +18,22 @@ variable "environment" {
 
 variable "label_order" {
   type        = list(any)
-  default     = []
+  default     = ["name", "environment"]
   description = "label order, e.g. `name`,`application`."
 }
 
-variable "attributes" {
-  type        = list(string)
-  default     = []
-  description = "Additional attributes (e.g. `1`)."
-}
-
-variable "tags" {
-  type        = map(string)
-  default     = {}
-  description = "Additional tags (e.g. map(`BusinessUnit`,`XYZ`)."
-}
+#variable "attributes" {
+#  type        = list(string)
+#  default     = []
+#  description = "Additional attributes (e.g. `1`)."
+#}
 
 variable "managedby" {
   type        = string
-  default     = ""
-  description = ""
+  default     = "slovink"
+  description = "ManagedBy, eg 'slovink'."
 }
 
-# Module      : KMS KEY
-# Description : Provides a KMS customer master key.
 variable "deletion_window_in_days" {
   type        = number
   default     = 10
@@ -67,6 +57,11 @@ variable "enabled" {
   default     = true
   description = "Specifies whether the kms is enabled or disabled."
 }
+variable "kms_key_enabled" {
+  type        = bool
+  default     = true
+  description = "Specifies whether the kms is enabled or disabled."
+}
 
 
 variable "key_usage" {
@@ -80,13 +75,6 @@ variable "alias" {
   type        = string
   default     = ""
   description = "The display name of the alias. The name must start with the word `alias` followed by a forward slash."
-}
-
-variable "policy" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "A valid policy JSON document. For more information about building AWS IAM policy documents with Terraform."
 }
 
 variable "customer_master_key_spec" {
@@ -106,4 +94,58 @@ variable "multi_region" {
   type        = bool
   default     = true
   description = "Indicates whether the KMS key is a multi-Region (true) or regional (false) key."
+}
+
+variable "bypass_policy_lockout_safety_check" {
+  type        = bool
+  default     = false
+  description = "A flag to indicate whether to bypass the key policy lockout safety check. Setting this value to true increases the risk that the KMS key becomes unmanageable"
+}
+
+variable "valid_to" {
+  type        = string
+  default     = "2024-01-02T15:04:05Z"
+  description = "Time at which the imported key material expires. When the key material expires, AWS KMS deletes the key material and the CMK becomes unusable. If not specified, key material does not expire"
+}
+
+variable "key_material_base64" {
+  type        = string
+  default     = null
+  description = "Base64 encoded 256-bit symmetric encryption key material to import. The CMK is permanently associated with this key material. External key only"
+}
+
+variable "create_external_enabled" {
+  type        = bool
+  default     = false
+  description = "Determines whether an external CMK (externally provided material) will be created or a standard CMK (AWS provided material)"
+}
+
+variable "primary_external_key_arn" {
+  type        = string
+  default     = null
+  description = "The primary external key arn of a multi-region replica external key"
+}
+
+variable "primary_key_arn" {
+  type        = string
+  default     = ""
+  description = "The primary key arn of a multi-region replica key"
+}
+
+variable "policy" {
+  type        = string
+  default     = null
+  description = "A valid policy JSON document. Although this is a key policy, not an IAM policy, an `aws_iam_policy_document`, in the form that designates a principal, can be used"
+}
+
+variable "create_replica_enabled" {
+  type        = bool
+  default     = false
+  description = "Determines whether a replica standard CMK will be created (AWS provided material)"
+}
+
+variable "create_replica_external_enabled" {
+  type        = bool
+  default     = false
+  description = "Determines whether a replica external CMK will be created (externally provided material)"
 }
