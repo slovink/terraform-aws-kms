@@ -6,17 +6,38 @@
 </h1>
 
 <p align="center" style="font-size: 1.2rem;">
-    Terraform module to create KMS resource on AWS.
+    Terraform module to create vpc-peering resource on AWS.
      </p>
 
 <p align="center">
 
 <a href="https://www.terraform.io">
-  <img src="https://img.shields.io/badge/Terraform-v1.1.7-green" alt="Terraform">
+  <img src="https://img.shields.io/badge/Terraform-v1.7.0-green" alt="Terraform">
 </a>
-<a href="LICENSE.md">
+<a href="https://github.com/slovink/terraform-aws-vpc-peering/blob/main/LICENSE">
   <img src="https://img.shields.io/badge/License-APACHE-blue.svg" alt="Licence">
 </a>
+
+
+
+</p>
+<p align="center">
+
+<a href='https://www.facebook.com/Slovink.in=https://github.com/slovink/terraform-vpc-peering'>
+  <img title="Share on Facebook" src="https://user-images.githubusercontent.com/50652676/62817743-4f64cb80-bb59-11e9-90c7-b057252ded50.png" />
+</a>
+<a href='https://www.linkedin.com/company/101534993/admin/feed/posts/=https://github.com/slovink/terraform-vpc-peering'>
+  <img title="Share on LinkedIn" src="https://user-images.githubusercontent.com/50652676/62817742-4e339e80-bb59-11e9-87b9-a1f68cae1049.png" />
+</a>
+
+
+
+- [Introduction](#introduction)
+- [Usage](#usage)
+- [Module Inputs](#module-inputs)
+- [Module Outputs](#module-outputs)
+- [Examples](#examples)
+- [License](#license)
 
 
 ## Prerequisites
@@ -34,30 +55,354 @@ This module has a few dependencies:
 
 ## Examples
 
+**IMPORTANT:** Since the `master` branch used in `source` varies based on new modifications, we suggest that you use the release versions [here](https://github.com/slovink/terraform-aws-kms/tree/vinod/_example).
 
-**IMPORTANT:** Since the `master` branch used in `source` varies based on new modifications, we suggest that you use the release versions [here](https://github.com/slovink/terraform-aws-kms.git).
+## License
+This Terraform module is provided under the '[License Name]' License. Please see the [LICENSE](https://github.com/slovink/terraform-aws-kms/blob/vinod/LICENSE) file for more details.
 
-
-### Simple Example
+### default Example
 Here is an example of how you can use this module in your inventory structure:
   ```hcl
-module "kms_key" {
-  source = "./../"
+    module "kms_key" {
+        source                  = "./../../"
+        name                    = "kms"
+        environment             = "test"
+        deletion_window_in_days = 7
+        alias                   = "alias/cloudtrail_Name"
+        kms_key_enabled         = true
+        multi_region            = true
+        valid_to                = "2023-11-21T23:20:50Z"
+        policy                  = data.aws_iam_policy_document.default.json
+        }
 
-  name        = "kms"
-  environment = "test"
-  label_order = ["name", "environment"]
+        data "aws_caller_identity" "current" {}
+        data "aws_partition" "current" {}
 
-  enabled                 = true
-  description             = "KMS key for cloudtrail"
-  deletion_window_in_days = 15
-  alias                   = "alias/cloudtrail_Name"
-  multi_region            = false
-  policy                  = data.aws_iam_policy_document.default.json
-}
+        data "aws_iam_policy_document" "default" {
+        version = "2012-10-17"
+        statement {
+        sid    = "Enable IAM User Permissions"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions   = ["kms:*"]
+        resources = ["*"]
+        }
+        statement {
+        sid    = "Allow CloudTrail to encrypt logs"
+        effect = "Allow"
+        principals {
+          type        = "Service"
+          identifiers = ["cloudtrail.amazonaws.com"]
+        }
+        actions   = ["kms:GenerateDataKey*"]
+        resources = ["*"]
+        condition {
+          test     = "StringLike"
+          variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+          values   = ["arn:aws:cloudtrail:*:XXXXXXXXXXXX:trail/*"]
+        }
+        }
+
+        statement {
+        sid    = "Allow CloudTrail to describe key"
+        effect = "Allow"
+        principals {
+          type        = "Service"
+          identifiers = ["cloudtrail.amazonaws.com"]
+        }
+        actions   = ["kms:DescribeKey"]
+        resources = ["*"]
+        }
+
+        statement {
+        sid    = "Allow principals in the account to decrypt log files"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions = [
+          "kms:Decrypt",
+          "kms:ReEncryptFrom"
+        ]
+        resources = ["*"]
+        condition {
+          test     = "StringEquals"
+          variable = "kms:CallerAccount"
+          values = [
+            "XXXXXXXXXXXX"]
+        }
+        condition {
+          test     = "StringLike"
+          variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+          values   = ["arn:aws:cloudtrail:*:XXXXXXXXXXXX:trail/*"]
+        }
+        }
+
+        statement {
+        sid    = "Allow alias creation during setup"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions   = ["kms:CreateAlias"]
+        resources = ["*"]
+        }
+    }
 
   ```
 
+### kms-key-external Example
+
+  ```hcl
+    module "kms_key" {
+      source                  = "./../../"
+      name                    = "kms"
+      environment             = "test"
+      deletion_window_in_days = 7
+      alias                   = "alias/external_key"
+      kms_key_enabled         = false
+      enabled                 = true
+      multi_region            = true
+      create_external_enabled = true
+      valid_to                = "2023-11-21T23:20:50Z"
+      key_material_base64     = "WblXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      policy                  = data.aws_iam_policy_document.default.json
+     }
+
+     data "aws_caller_identity" "current" {}
+     data "aws_partition" "current" {}
+
+     data "aws_iam_policy_document" "default" {
+      version = "2012-10-17"
+      statement {
+        sid    = "Enable IAM User Permissions"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions   = ["kms:*"]
+        resources = ["*"]
+      }
+      statement {
+        sid    = "Allow CloudTrail to encrypt logs"
+        effect = "Allow"
+        principals {
+          type        = "Service"
+          identifiers = ["cloudtrail.amazonaws.com"]
+        }
+        actions   = ["kms:GenerateDataKey*"]
+        resources = ["*"]
+        condition {
+          test     = "StringLike"
+          variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+          values   = ["arn:aws:cloudtrail:*:XXXXXXXXXXXX:trail/*"]
+        }
+      }
+
+      statement {
+        sid    = "Allow CloudTrail to describe key"
+        effect = "Allow"
+        principals {
+          type        = "Service"
+          identifiers = ["cloudtrail.amazonaws.com"]
+        }
+        actions   = ["kms:DescribeKey"]
+        resources = ["*"]
+      }
+
+      statement {
+        sid    = "Allow principals in the account to decrypt log files"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions = [
+          "kms:Decrypt",
+          "kms:ReEncryptFrom"
+        ]
+        resources = ["*"]
+        condition {
+          test     = "StringEquals"
+          variable = "kms:CallerAccount"
+          values = [
+          "XXXXXXXXXXXX"]
+        }
+        condition {
+          test     = "StringLike"
+          variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+          values   = ["arn:aws:cloudtrail:*:XXXXXXXXXXXX:trail/*"]
+        }
+      }
+
+      statement {
+        sid    = "Allow alias creation during setup"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions   = ["kms:CreateAlias"]
+        resources = ["*"]
+      }
+    }
+  ```
+### kms-key-replica Example
+
+  ```hcl
+      module "kms_key" {
+      source                  = "./../../"
+      name                    = "kms"
+      environment             = "test"
+      deletion_window_in_days = 7
+      alias                   = "alias/replicate_key"
+      kms_key_enabled         = false
+      create_replica_enabled  = true
+      enabled                 = true
+      multi_region            = false
+      primary_key_arn         = "arn:aws:kms:xxxxxxxxxxxxxxxxxxxxx"
+      policy                  = data.aws_iam_policy_document.default.json
+    }
+
+    data "aws_caller_identity" "current" {}
+    data "aws_partition" "current" {}
+
+    data "aws_iam_policy_document" "default" {
+      version = "2012-10-17"
+      statement {
+        sid    = "Enable IAM User Permissions"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions   = ["kms:*"]
+        resources = ["*"]
+      }
+      statement {
+        sid    = "Allow CloudTrail to encrypt logs"
+        effect = "Allow"
+        principals {
+          type        = "Service"
+          identifiers = ["cloudtrail.amazonaws.com"]
+        }
+        actions   = ["kms:GenerateDataKey*"]
+        resources = ["*"]
+        condition {
+          test     = "StringLike"
+          variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+          values   = ["arn:aws:cloudtrail:*:XXXXXXXXXXXX:trail/*"]
+        }
+      }
+
+      statement {
+        sid    = "Allow CloudTrail to describe key"
+        effect = "Allow"
+        principals {
+          type        = "Service"
+          identifiers = ["cloudtrail.amazonaws.com"]
+        }
+        actions   = ["kms:DescribeKey"]
+        resources = ["*"]
+      }
+
+      statement {
+        sid    = "Allow principals in the account to decrypt log files"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions = [
+          "kms:Decrypt",
+          "kms:ReEncryptFrom"
+        ]
+        resources = ["*"]
+        condition {
+          test     = "StringEquals"
+          variable = "kms:CallerAccount"
+          values = [
+          "XXXXXXXXXXXX"]
+        }
+        condition {
+          test     = "StringLike"
+          variable = "kms:EncryptionContext:aws:cloudtrail:arn"
+          values   = ["arn:aws:cloudtrail:*:XXXXXXXXXXXX:trail/*"]
+        }
+      }
+
+      statement {
+        sid    = "Allow alias creation during setup"
+        effect = "Allow"
+        principals {
+          type = "AWS"
+          identifiers = [
+            format(
+              "arn:%s:iam::%s:root",
+              join("", data.aws_partition.current[*].partition),
+              data.aws_caller_identity.current.account_id
+            )
+          ]
+        }
+        actions   = ["kms:CreateAlias"]
+        resources = ["*"]
+      }
+    }
+  ```
 
 
 ## Feedback
