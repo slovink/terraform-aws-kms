@@ -14,7 +14,7 @@
 <a href="https://www.terraform.io">
   <img src="https://img.shields.io/badge/Terraform-v1.7.0-green" alt="Terraform">
 </a>
-<a href="https://github.com/slovink/terraform-aws-vpc-peering/blob/main/LICENSE">
+<a href="https://github.com/slovink/terraform-aws-kms/blob/vinod/LICENSE">
   <img src="https://img.shields.io/badge/License-APACHE-blue.svg" alt="Licence">
 </a>
 
@@ -23,10 +23,10 @@
 </p>
 <p align="center">
 
-<a href='https://www.facebook.com/Slovink.in=https://github.com/slovink/terraform-vpc-peering'>
+<a href='https://www.facebook.com/Slovink.in=https://github.com/slovink/terraform-kms'>
   <img title="Share on Facebook" src="https://user-images.githubusercontent.com/50652676/62817743-4f64cb80-bb59-11e9-90c7-b057252ded50.png" />
 </a>
-<a href='https://www.linkedin.com/company/101534993/admin/feed/posts/=https://github.com/slovink/terraform-vpc-peering'>
+<a href='https://www.linkedin.com/company/101534993/admin/feed/posts/=https://github.com/slovink/terraform-kms'>
   <img title="Share on LinkedIn" src="https://user-images.githubusercontent.com/50652676/62817742-4e339e80-bb59-11e9-87b9-a1f68cae1049.png" />
 </a>
 
