@@ -64,7 +64,7 @@ This Terraform module is provided under the '[License Name]' License. Please see
 Here is an example of how you can use this module in your inventory structure:
   ```hcl
     module "kms_key" {
-        source                  = "./../../"
+        source                  = "https://github.com/slovink/terraform-aws-kms.git?ref=v1.0.0"
         name                    = "kms"
         environment             = "test"
         deletion_window_in_days = 7
@@ -178,7 +178,7 @@ Here is an example of how you can use this module in your inventory structure:
 
   ```hcl
     module "kms_key" {
-      source                  = "./../../"
+      source                  = "https://github.com/slovink/terraform-aws-kms.git?ref=v1.0.0"
       name                    = "kms"
       environment             = "test"
       deletion_window_in_days = 7
@@ -293,7 +293,7 @@ Here is an example of how you can use this module in your inventory structure:
 
   ```hcl
       module "kms_key" {
-      source                  = "./../../"
+      source                  = "https://github.com/slovink/terraform-aws-kms.git?ref=v1.0.0"
       name                    = "kms"
       environment             = "test"
       deletion_window_in_days = 7
