@@ -1,23 +1,22 @@
 provider "aws" {
   region = "eu-west-1"
+
 }
-data "aws_caller_identity" "current" {}
-data "aws_partition" "current" {}
 
 module "kms_key" {
-  source = "./../"
-
-  name        = "kms"
-  environment = "test"
-  label_order = ["name", "environment"]
-
-  enabled                 = true
-  description             = "KMS key for cloudtrail"
-  deletion_window_in_days = 15
+  source                  = "./../../"
+  name                    = "kms"
+  environment             = "test"
+  deletion_window_in_days = 7
   alias                   = "alias/cloudtrail_Name"
-  multi_region            = false
+  kms_key_enabled         = true
+  multi_region            = true
+  valid_to                = "2023-11-21T23:20:50Z"
   policy                  = data.aws_iam_policy_document.default.json
 }
+
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
 
 data "aws_iam_policy_document" "default" {
   version = "2012-10-17"
@@ -29,7 +28,7 @@ data "aws_iam_policy_document" "default" {
       identifiers = [
         format(
           "arn:%s:iam::%s:root",
-          join("", data.aws_partition.current.*.partition),
+          join("", data.aws_partition.current[*].partition),
           data.aws_caller_identity.current.account_id
         )
       ]
@@ -72,7 +71,7 @@ data "aws_iam_policy_document" "default" {
       identifiers = [
         format(
           "arn:%s:iam::%s:root",
-          join("", data.aws_partition.current.*.partition),
+          join("", data.aws_partition.current[*].partition),
           data.aws_caller_identity.current.account_id
         )
       ]
@@ -103,7 +102,7 @@ data "aws_iam_policy_document" "default" {
       identifiers = [
         format(
           "arn:%s:iam::%s:root",
-          join("", data.aws_partition.current.*.partition),
+          join("", data.aws_partition.current[*].partition),
           data.aws_caller_identity.current.account_id
         )
       ]
